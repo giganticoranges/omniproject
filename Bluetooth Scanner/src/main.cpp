@@ -1,40 +1,82 @@
 #include <Arduino.h>
-/*
-   Based on Neil Kolban example for IDF: https://github.com/nkolban/esp32-snippets/blob/master/cpp_utils/tests/BLE%20Tests/SampleScan.cpp
-   Ported to Arduino ESP32 by Evandro Copercini
-*/
+
 
 #include <BLEDevice.h>
 #include <BLEUtils.h>
 #include <BLEScan.h>
 #include <BLEAdvertisedDevice.h>
 
-int scanTime = 5; //In seconds
+#include <stdio.h>
+#include <string.h>
+
+int scanTime = 1; //In seconds
 BLEScan* pBLEScan;
 
-struct {
-  uint16_t manufacturerId;
-  uint8_t subType;
-  uint8_t subTypeLength;
-  uint16_t uuid;
-  uint16_t major;
-  uint16_t minor;
-  uint8_t power;
-} beaconRecord;
+char *substring(char *string, int position, int length);
 
 class MyAdvertisedDeviceCallbacks: public BLEAdvertisedDeviceCallbacks {
-  
     void onResult(BLEAdvertisedDevice advertisedDevice) {
-      Serial.printf("Advertised Device: %s \n", advertisedDevice.toString().c_str());
-      struct beaconRecord *pBeaconRecord = (struct beaconRecord *)(advertisedDevice.getManufacturerData().data());
-      printf("major: %d, minor: %d", pBeaconRecord ->major, pBeaconRecord ->minor);
+      int rssiRecieved = 0;
+      //Serial.printf("Advertised Device: %s \n", advertisedDevice.toString().c_str());
+      if (advertisedDevice.haveRSSI()){
+        rssiRecieved = (int)advertisedDevice.getRSSI();
+      }
+      if (advertisedDevice.haveManufacturerData()){
+        char *pHex = BLEUtils::buildHexData(nullptr, (uint8_t*)advertisedDevice.getManufacturerData().data(), advertisedDevice.getManufacturerData().length());
+        char* major = substring( pHex, 41, 4);
+        char* minor = substring( pHex, 45, 4);
+        if(strcmp(major, "1388") == 0)
+        {
+          if(strcmp(minor, "0004") == 0)
+          {
+            if(rssiRecieved > -70)
+            {
+              digitalWrite(13, HIGH);
+            } 
+            else
+            {
+              digitalWrite(13, LOW);
+            }
+          }
+          if(strcmp(minor, "0003") == 0)
+          {
+            if(rssiRecieved > -70)
+            {
+              digitalWrite(12, HIGH);
+            } 
+            else
+            {
+              digitalWrite(12, LOW);
+            }
+          }
+          if(strcmp(minor, "0002") == 0)
+          {
+            if(rssiRecieved > -70)
+            {
+              digitalWrite(2, HIGH);
+            } 
+            else
+            {
+              digitalWrite(2, LOW);
+            }
+          }
+          printf("major: %s \n", major);
+          printf("minor: %s \n", minor);
+          printf("rssi: %d \n", rssiRecieved);
+        }
+        free(pHex);
+      }
     }
 };
 
 
 void setup() {
   Serial.begin(115200);
-  Serial.println("Scanning...");
+  //Serial.println("Scanning...");
+
+  pinMode(13, OUTPUT);
+  pinMode(12, OUTPUT);
+  pinMode(2, OUTPUT);
 
   BLEDevice::init("");
   pBLEScan = BLEDevice::getScan(); //create new scan
@@ -45,11 +87,34 @@ void setup() {
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
   BLEScanResults foundDevices = pBLEScan->start(scanTime, false);
-  Serial.print("Devices found: ");
-  Serial.println(foundDevices.getCount());
-  Serial.println("Scan done!");
+  //Serial.print("Devices found: ");
+  //Serial.println(foundDevices.getCount());
+  //Serial.println("Scan done!");
   pBLEScan->clearResults();   // delete results fromBLEScan buffer to release memory
-  delay(2000);
+  //delay(2000);
+}
+
+char *substring(char *string, int position, int length)
+{
+   char *pointer;
+   int c;
+ 
+   pointer = (char*)malloc(length+1);
+   
+   if (pointer == NULL)
+   {
+      printf("Unable to allocate memory.\n");
+      exit(1);
+   }
+ 
+   for (c = 0 ; c < length ; c++)
+   {
+      *(pointer+c) = *(string+position-1);      
+      string++;  
+   }
+ 
+   *(pointer+c) = '\0';
+ 
+   return pointer;
 }
