@@ -95,8 +95,7 @@ void loop() {
   //delay(2000);
 }
 
-char *substring(char *string, int position, int length)
-{
+char *substring(char *string, int position, int length){
    char *pointer;
    int c;
  
