@@ -1,7 +1,7 @@
 import socket
 
 s = socket.socket() #create a new socket object
-
+s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 s.bind(('0.0.0.0', 8090)) #bind socket to all ip addresses on LAN and por 8090
 
 s.listen(0)

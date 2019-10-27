@@ -37,6 +37,7 @@ int beaconsDataArray[MAX_BEACONS * 2];
 //function prototypes
 char *substring(char *string, int position, int length);
 void clearArray(int *arrayName, int numElements);
+String concatenateArray(int *arrayName, int numElements);
 
 class MyAdvertisedDeviceCallbacks : public BLEAdvertisedDeviceCallbacks
 {
@@ -56,7 +57,7 @@ class MyAdvertisedDeviceCallbacks : public BLEAdvertisedDeviceCallbacks
       char *minor = substring(pHex, 45, 4); //don't really care which beacons are close (on client side)
       if (strcmp(major, "1388") == 0)
       {
-        if (beaconArrayCount/2 < MAX_BEACONS)
+        if (beaconArrayCount / 2 < MAX_BEACONS)
         {
           DEBUG_PRINT("beacon addded, beaconArrayCount: ");
           DEBUG_PRINTLN(beaconArrayCount);
@@ -116,16 +117,18 @@ void loop()
   DEBUG_PRINTLN("Connected to server successful!");
 
   Serial.println("beacons:");
-  for (int a = 0; a < beaconArrayCount; a++)
-  {
+  for (int a = 0; a < beaconArrayCount; a++){
     Serial.println(beaconsDataArray[a]);
   }
 
-  for (int x = 0; x < beaconArrayCount; x++)
-  {
+  client.print(concatenateArray(beaconsDataArray, beaconArrayCount));
+  client.print('\n');
+
+  /*for (int x = 0; x < beaconArrayCount; x++){
     client.print(beaconsDataArray[x]);
     client.print("\n");
-  }
+  }*/
+  
   DEBUG_PRINTLN("Disconnecting...");
   client.stop();
 
@@ -133,18 +136,21 @@ void loop()
   delay(200);
 }
 
-char *substring(char *string, int position, int length){
+char *substring(char *string, int position, int length)
+{
   char *pointer;
   int c;
 
   pointer = (char *)malloc(length + 1);
 
-  if (pointer == NULL){
+  if (pointer == NULL)
+  {
     DEBUG_PRINTLN("Unable to allocate memory.\n");
     exit(1);
   }
 
-  for (c = 0; c < length; c++){
+  for (c = 0; c < length; c++)
+  {
     *(pointer + c) = *(string + position - 1);
     string++;
   }
@@ -156,8 +162,22 @@ void clearArray(int *arrayName, int numElements)
 {
   for (int x = 0; x < numElements; x++)
   {
-    DEBUG_PRINT("abbout to reset: ");
-    DEBUG_PRINTLN(arrayName[x]);
+    Serial.println("abbout to reset: ");
+    Serial.println(arrayName[x]);
     arrayName[x] = 0;
   }
+}
+
+String concatenateArray(int *arrayName, int numElements)
+{
+  String toSend = "";
+  for (int x = 0; x < numElements; x += 2){
+    toSend += String(arrayName[x]);
+    toSend += ',';
+    toSend += String(arrayName[x + 1]);
+    toSend += ',';
+  }
+  Serial.print("Sending: ");
+  Serial.println(toSend);
+  return toSend;
 }
