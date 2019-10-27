@@ -1,5 +1,4 @@
 #include <Arduino.h>
-
 #include <WiFi.h>
 
 //bluetooth imports
@@ -10,33 +9,40 @@
 
 //#include <stdio.h>
 #include <string.h>
-//end bluetooth imports
 
 #define MAX_BEACONS 20
+
+//#define DEBUG
+#ifdef DEBUG
+#define DEBUG_PRINTLN(x) Serial.println(x)
+#define DEBUG_PRINT(x) Serial.print(x)
+#else
+#define DEBUG_PRINTLN(x)
+#define DEBUG_PRINT(x)
+#endif
 
 //bluetooth variables
 int scanTime = 1; //In seconds
 BLEScan *pBLEScan;
-//end bluetooth variables
 
 const char *ssid = "aicv_devices";  //wifi network name
 const char *password = "AICVLab1!"; //wifi network password
 
 const uint16_t port = 8090;         //port to connect to
 const char *host = "192.168.0.100"; //host ip address (ifconfig on the host pc)
-int x = 3;                          //counter
-int y = 0;
 
-int beacons[MAX_BEACONS/2];
+int beaconArrayCount;
+int beaconsDataArray[MAX_BEACONS * 2];
 
-//substring function prototype
+//function prototypes
 char *substring(char *string, int position, int length);
+void clearArray(int *arrayName, int numElements);
 
 class MyAdvertisedDeviceCallbacks : public BLEAdvertisedDeviceCallbacks
 {
-  int beaconCount = 0;
   void onResult(BLEAdvertisedDevice advertisedDevice)
   {
+    DEBUG_PRINTLN("beaconArrayCount reset");
     int rssiRecieved = 0;
     //Serial.printf("Advertised Device: %s \n", advertisedDevice.toString().c_str());
     if (advertisedDevice.haveRSSI())
@@ -50,13 +56,13 @@ class MyAdvertisedDeviceCallbacks : public BLEAdvertisedDeviceCallbacks
       char *minor = substring(pHex, 45, 4); //don't really care which beacons are close (on client side)
       if (strcmp(major, "1388") == 0)
       {
-        if(beaconCount < MAX_BEACONS/2)
+        if (beaconArrayCount/2 < MAX_BEACONS)
         {
-          Serial.print("beacon addded, beaconCount: ");
-          Serial.println(beaconCount);
-          beacons[beaconCount] = atoi(minor);
-          beacons[beaconCount + 1] = rssiRecieved;
-          beaconCount += 2;
+          DEBUG_PRINT("beacon addded, beaconArrayCount: ");
+          DEBUG_PRINTLN(beaconArrayCount);
+          beaconsDataArray[beaconArrayCount] = atoi(minor);
+          beaconsDataArray[beaconArrayCount + 1] = rssiRecieved;
+          beaconArrayCount += 2;
         }
       }
       free(pHex);
@@ -73,11 +79,11 @@ void setup()
   while (WiFi.status() != WL_CONNECTED)
   {
     delay(500);
-    Serial.println("...");
+    DEBUG_PRINTLN("...");
   }
 
-  Serial.print("WiFi connected with IP: ");
-  Serial.println(WiFi.localIP());
+  DEBUG_PRINT("WiFi connected with IP: ");
+  DEBUG_PRINTLN(WiFi.localIP());
 
   //bluetooth stuff
   BLEDevice::init("");
@@ -90,65 +96,68 @@ void setup()
 
 void loop()
 {
+  //clear beacons array
+  clearArray(beaconsDataArray, beaconArrayCount);
+  beaconArrayCount = 0;
 
   //bluetooth scan
   BLEScanResults foundDevices = pBLEScan->start(scanTime, false);
-  Serial.print("Devices found: ");
-  Serial.println(foundDevices.getCount());
+  DEBUG_PRINT("Devices found: ");
+  DEBUG_PRINTLN(foundDevices.getCount());
 
   //create new wifi client
   WiFiClient client;
-
-  Serial.println("beacons:\n");
-  for (int a = 0; a<8; a ++)
-  {
-    
-    Serial.println(beacons[a]);
-  }
-
   if (!client.connect(host, port))
   {
-
-    Serial.println("Connection to host failed");
-
+    DEBUG_PRINTLN("Connection to host failed");
     delay(1000);
     return;
   }
+  DEBUG_PRINTLN("Connected to server successful!");
 
-  Serial.println("Connected to server successful!");
-
-  for (x = 0; x < 8; x++)
+  Serial.println("beacons:");
+  for (int a = 0; a < beaconArrayCount; a++)
   {
-    client.print(beacons[x]);
+    Serial.println(beaconsDataArray[a]);
+  }
+
+  for (int x = 0; x < beaconArrayCount; x++)
+  {
+    client.print(beaconsDataArray[x]);
     client.print("\n");
   }
-  Serial.println("Disconnecting...");
+  DEBUG_PRINTLN("Disconnecting...");
   client.stop();
 
   pBLEScan->clearResults(); // delete results fromBLEScan buffer to release memory
-  delay(2000);
+  delay(200);
 }
 
-char *substring(char *string, int position, int length)
-{
+char *substring(char *string, int position, int length){
   char *pointer;
   int c;
 
   pointer = (char *)malloc(length + 1);
 
-  if (pointer == NULL)
-  {
-    printf("Unable to allocate memory.\n");
+  if (pointer == NULL){
+    DEBUG_PRINTLN("Unable to allocate memory.\n");
     exit(1);
   }
 
-  for (c = 0; c < length; c++)
-  {
+  for (c = 0; c < length; c++){
     *(pointer + c) = *(string + position - 1);
     string++;
   }
-
   *(pointer + c) = '\0';
-
   return pointer;
+}
+
+void clearArray(int *arrayName, int numElements)
+{
+  for (int x = 0; x < numElements; x++)
+  {
+    DEBUG_PRINT("abbout to reset: ");
+    DEBUG_PRINTLN(arrayName[x]);
+    arrayName[x] = 0;
+  }
 }
