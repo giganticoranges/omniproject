@@ -1,5 +1,5 @@
 #include <Arduino.h>
-//#include <WiFi.h>
+#include <WiFi.h>
 
 //bluetooth imports
 #include <BLEDevice.h>
@@ -26,11 +26,11 @@
 int scanTime = 1; //In seconds
 BLEScan *pBLEScan;
 
-//const char *ssid = "aicv_devices";  //wifi network name
-//const char *password = "AICVLab1!"; //wifi network password
+const char *ssid = "aicv_devices";  //wifi network name
+const char *password = "AICVLab1!"; //wifi network password
 
-//const uint16_t port = 8090;         //port to connect to
-//const char *host = "192.168.0.100"; //host ip address (ifconfig on the host pc)
+const uint16_t port = 8090;         //port to connect to
+const char *host = "192.168.0.100"; //host ip address (ifconfig on the host pc)
 
 int beaconArrayCount;
 int beaconsIdArray[MAX_BEACONS]; //holds all the beacon ids found
@@ -41,7 +41,7 @@ int topBeaconsRSSIArray[3]; //holds the RSSIs of the strongest 3 beacons recieve
 //function prototypes
 char *substring(char *string, int position, int length);
 void clearArray(int *arrayName, int numElements);
-String concatenateArray(int *arrayName, int numElements);
+String concatenateArray(int *array1Name, int *array2Name, int numElements);
 void getStrongestThree(int *iDArray, int *rssiArray, int *strongestIDArray, int *strongestRSSIArray);
 
 class MyAdvertisedDeviceCallbacks : public BLEAdvertisedDeviceCallbacks
@@ -77,14 +77,14 @@ void setup()
 
   Serial.begin(115200); //set this serial rate in platformio.ini
 
-  //WiFi.begin(ssid, password);
-  //while (WiFi.status() != WL_CONNECTED){
-    //delay(500);
-    //DEBUG_PRINTLN("...");
-  //}
+  WiFi.begin(ssid, password);
+  while (WiFi.status() != WL_CONNECTED){
+    delay(500);
+    DEBUG_PRINTLN("...");
+  }
 
-  //DEBUG_PRINT("WiFi connected with IP: ");
-  //DEBUG_PRINTLN(WiFi.localIP());
+  DEBUG_PRINT("WiFi connected with IP: ");
+  DEBUG_PRINTLN(WiFi.localIP());
 
   //bluetooth stuff
   BLEDevice::init("");
@@ -111,13 +111,13 @@ void loop()
     Serial.println(foundDevices.getCount());
 
   //create new wifi client
-  //WiFiClient client;
-  //if (!client.connect(host, port)){
-    //DEBUG_PRINTLN("Connection to host failed");
-    //delay(1000);
-    //return;
-  //}
-  //DEBUG_PRINTLN("Connected to server successful!");
+  WiFiClient client;
+  if (!client.connect(host, port)){
+    DEBUG_PRINTLN("Connection to host failed");
+    delay(1000);
+    return;
+  }
+  DEBUG_PRINTLN("Connected to server successful!");
 
   getStrongestThree(beaconsIdArray, beaconsRSSIArray, topBeaconsIDArray, topBeaconsRSSIArray);
   for (int x = 0; x < 3; x++){
@@ -129,12 +129,12 @@ void loop()
   }
     Serial.print("**\n");
 
-  //client.print(concatenateArray(beaconsIdArray, beaconArrayCount));
+  client.print(concatenateArray(topBeaconsIDArray, topBeaconsRSSIArray, 3));
   //client.print('\n');
 
   
   //DEBUG_PRINTLN("Disconnecting...");
-  //client.stop();
+  client.stop();
 
   pBLEScan->clearResults(); // delete results fromBLEScan buffer to release memory
   delay(50);
@@ -168,16 +168,16 @@ void clearArray(int *arrayName, int numElements){
   }
 }
 
-String concatenateArray(int *arrayName, int numElements){
+String concatenateArray(int *array1Name, int *array2Name, int numElements){
   String toSend = "";
-  for (int x = 0; x < numElements; x += 2){
-    toSend += String(arrayName[x]);
+  for (int x = 0; x < numElements; x++){
+    toSend += String(array1Name[x]);
     toSend += ',';
-    toSend += String(arrayName[x + 1]);
+    toSend += String(array2Name[x]);
     toSend += ',';
   }
-  //Serial.print("Sending: ");
-  //Serial.println(toSend);
+  Serial.print("Sending: ");
+  Serial.println(toSend);
   return toSend;
 }
 

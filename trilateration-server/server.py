@@ -11,13 +11,13 @@ while True:
     client, addr = s.accept() #get client object and address
 
     while True:
-        content = client.recv(1024)
+        content = client.recv(1000)
  
-        if len(content) ==0:
+        if len(content) == 0:
            break
  
         else:
             print(content)
 
-    print("Client disconnectted - Closing connection") #if the client disconnects
+    #print("Client disconnectted - Closing connection") #if the client disconnects
     client.close()
