@@ -1,3 +1,7 @@
+//vcc-5v
+//gnd-gnd
+//TX - 10
+//RX - 11
 #include <SoftwareSerial.h>
 SoftwareSerial BTserial(10,11);
 
