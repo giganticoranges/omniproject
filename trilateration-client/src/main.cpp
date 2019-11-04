@@ -106,7 +106,7 @@ void loop()
   beaconArrayCount = 0;
 
   //bluetooth scan
-    BLEScanResults foundDevices = pBLEScan->start(1, false);
+    BLEScanResults foundDevices = pBLEScan->start(scanTime, false);
     Serial.print("Devices found: ");
     Serial.println(foundDevices.getCount());
 

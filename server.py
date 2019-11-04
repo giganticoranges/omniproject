@@ -6,6 +6,8 @@ s.bind(('0.0.0.0', 8090)) #bind socket to all ip addresses on LAN and por 8090
 
 s.listen(0)
 
+
+
 while True:
  
     client, addr = s.accept() #get client object and address
@@ -17,8 +19,9 @@ while True:
            break
  
         else:
-            signal_list = content.split(',')
-            print(signal_list)
+            content_list = content.split(',')
+            print(content_list)
+
 
     #print("Client disconnectted - Closing connection") #if the client disconnects
     client.close()
