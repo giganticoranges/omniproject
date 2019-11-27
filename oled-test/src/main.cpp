@@ -17,7 +17,7 @@
 // Declaration for an SSD1306 display connected to I2C (SDA, SCL pins)
 #define OLED_RESET     -1 // Reset pin # (or -1 if sharing Arduino reset pin)
 
-int scanTime = 3; //In seconds
+int scanTime = 1; //In seconds
 int counter = 0;
 String toPrint;
 BLEScan *pBLEScan;
@@ -44,10 +44,12 @@ class MyAdvertisedDeviceCallbacks : public BLEAdvertisedDeviceCallbacks
       char *minor = substring(pHex, 45, 4);
       //Serial.println(pHex);
       //Serial.println(major);
-      if (strcmp(major, "1388") == 0 && strcmp(minor, "0001") == 0)
+      if (strcmp(major, "1388") == 0 && strcmp(minor, "0005") == 0 && counter < 250)
       {
         //Serial.println(rssiRecieved);
         toPrint = rssiRecieved;
+        Serial.print(rssiRecieved);
+        Serial.print("\n");
       }
       free(pHex);
     }

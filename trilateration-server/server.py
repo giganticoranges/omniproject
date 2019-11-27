@@ -41,7 +41,7 @@ def get_intersections(x0, y0, r0, x1, y1, r1):
 
 def distance_calc(rssi):
     
-    distance = 0.0153 * np.exp(0.06 * rssi)
+    distance = 0.0153 * np.exp(-0.06 * rssi)
     
     return distance
 
@@ -69,8 +69,8 @@ def gen_map(x0, y0, r0, x1, y1, r1, x2, y2, r2):
 
     # create plot
     fig, ax = plt.subplots() 
-    ax.set_xlim((-10, 10))
-    ax.set_ylim((-10, 10))
+    ax.set_xlim((-2, 2))
+    ax.set_ylim((-2, 2))
     ax.add_artist(circle1)
     ax.add_artist(circle2)
     ax.add_artist(circle3)
@@ -85,7 +85,10 @@ def gen_map(x0, y0, r0, x1, y1, r1, x2, y2, r2):
     tempy1 = i_y3
     tempy2 = i_y4
     # tangent between intersection points
-    if tempx1 > tempx2:
+    if tempx1 == tempx2:
+        M1 = 1000
+        B1 = 0
+    elif tempx1 > tempx2:
         M1 = (tempy1 - tempy2) / (tempx1 - tempx2)
         B1 = tempy1 - M1 * tempx1
     else:
@@ -103,7 +106,10 @@ def gen_map(x0, y0, r0, x1, y1, r1, x2, y2, r2):
     tempy1 = i_y3
     tempy2 = i_y4
     # tangent between intersection points
-    if tempx1 > tempx2:
+    if tempx1 == tempx2:
+        M2 = 1000
+        B2 = 0
+    elif tempx1 > tempx2:
         M2 = (tempy1 - tempy2) / (tempx1 - tempx2)
         B2 = tempy1 - M2 * tempx1
     else:
@@ -121,7 +127,10 @@ def gen_map(x0, y0, r0, x1, y1, r1, x2, y2, r2):
     tempy1 = i_y3
     tempy2 = i_y4
     # tangent between intersection points
-    if tempx1 > tempx2:
+    if tempx1 == tempx2:
+        M3 = 1000
+        B3 = 0
+    elif tempx1 > tempx2:
         M3 = (tempy1 - tempy2) / (tempx1 - tempx2)
         B3 = tempy1 - M3 * tempx1
     else:
@@ -132,6 +141,21 @@ def gen_map(x0, y0, r0, x1, y1, r1, x2, y2, r2):
     nx1, ny1, nx2, ny2, nx3, ny3, cx, cy = centroid_three_lines(M1, B1, M2, B2, M3, B3)
     plt.plot(cx, cy, 'o', color = 'purple')
     plt.gca().set_aspect('equal', adjustable='box')
+
+
+    plt.show()
+
+
+def gen_rssi(x1, y1, rssi1, x2, y2, rssi2, x3, y3, rssi3):
+    
+    if((x1 != x2 and y1 != y2) or (x1 != x3 and y1 != y3)):
+        r1 = distance_calc(rssi1)
+        r2 = distance_calc(rssi2)
+        r3 = distance_calc(rssi3)
+        gen_map(x1, y1, r1, x2, y2, r2, x3, y3, r3)
+    else:
+        print('Overlapping points!')
+
 
 # Main
 if __name__=="__main__":
@@ -162,7 +186,7 @@ if __name__=="__main__":
                 df = pd.read_csv(DATA, sep=",")
                 df.columns = df.columns.str.strip()
                 df = df.sort_values(by = 'RSSI', ascending = False)
-                #print(df)
+                print(df)
                 for index, row in islice(df.iterrows(), 3):
                     counter += 1
                     current_row = beacons.loc[beacons['Beacon'] == row['Beacon']]
@@ -172,7 +196,8 @@ if __name__=="__main__":
                     y.append(current_row.iloc[0, 2])
                     rssi.append(row['RSSI'])
                 print('sending to function: ', x[0], ',', y[0], ',', rssi[0], ',', x[1], ',', y[1], ',', rssi[1], ',', x[2], ',', y[2], ',', rssi[2])
-                #gen_map(x[0], y[0], r[0], x[1], y[1], r[1], x[2], y[2], r[2])
+                gen_rssi(x[0], y[0], rssi[0]-4, x[1], y[1], rssi[1]-4, x[2], y[2], rssi[2]-4)
+                #gen_rssi(1.0,0.0,-65,1.0,1.0,-65,0.0,0.0,-65)
 
                 
 
